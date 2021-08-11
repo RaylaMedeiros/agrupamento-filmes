@@ -1,5 +1,5 @@
 ---
-title: "Tipos de filme de FULANO(A)"
+title: "Tipos de filme da Elizabeth Olsen"
 output:
     html_document:
     df_print: paged
@@ -30,48 +30,95 @@ paleta = c("#404E4D",
 ```{r}
 ## ANTES DE USAR
 # Para criar data/movies.csv
-import_data("scarlett_johansson") # ou com o ator/atriz que você escolher
+import_data("elizabeth_olsen") # ou com o ator/atriz que você escolher
 ```
 
 
 ```{r read}
-filmes = read_imported_data("scarlett_johansson")
-```
-
-## Descrição
-
-```{r}
-filmes %>% 
-    ggplot(aes(x = ano, y = bilheteria)) + 
-    geom_point(size = 4, color = paleta[1]) + 
-    scale_y_log10()
-```
-
-
-
-```{r}
-filmes %>% 
-    ggplot(aes(x = bilheteria)) + 
-    geom_histogram(binwidth = 15, fill = paleta[2], color = "black") + 
-    geom_rug(size = .5) 
-```
-
-```{r}
-filmes %>% 
-    ggplot(aes(x = avaliacao)) + 
-    geom_histogram(binwidth = 10, boundary = 0, fill = paleta[3], color = "black") + 
-    geom_rug(size = .5) 
+filmes = read_imported_data("elizabeth_olsen")
 ```
 
 ## Explorar interativamente
 
-```{r}
-p = filmes %>% 
-    ggplot(aes(x = ano, y = bilheteria, label = filme)) + 
-    geom_point(size = 4, color = paleta[1]) + 
-    scale_y_log10()
+Para esta análise escolhemos os filmes em que a atriz Elizabeth Olsen participou e analisaremos a crítica e a bilheteria deles.
 
-ggplotly(p)
+```{r}
+filmes %>% 
+    ggplot(aes(x = ano, y = bilheteria, label = filme)) + 
+    geom_point(size = 4) +
+    labs(
+        x = "Ano",
+        y = "Bilheteria em milhões",
+        color = "Grupo"
+    )
 ```
 
+Podemos ver que a atriz possui filmes com boas bilheterias ao longo dos anos, sendo os mais recentes os com maior bilheteria.
+
 ## Agrupamento 
+
+```{r}
+a = filmes %>% 
+    select(nota_audiencia, avaliacao, bilheteria)
+```
+
+```{r}
+m = kmeans(a, 4)
+```
+
+```{r}
+result = filmes %>% 
+    mutate(cluster = as.character(m$cluster))
+```
+
+```{r}
+result %>% 
+    ggplot(aes(x = nota_audiencia, y = bilheteria, color=cluster)) + 
+    geom_point(size = 4) +
+    labs(
+        x = "Avaliação da crítica",
+        y = "Bilheteria em milhões",
+        color = "Grupo"
+    )
+```
+
+A partir da relação da crítica e da bilheteria podemos notar facilmente 3 grupos definidos principalmente pela bilheteria, o primeiro sendo um grupo com uma bilheteria não muito boa, o segundo com uma bilheteria boa e o terceiro com uma ótima bilheteria. Sendo esses 2 últimos os filmes que ela atuou pela Marvel.
+
+### Filmes independentes, com baixa bilheteria
+
+Esse primeiro grupo são filmes independentes, que não são de nenhuma saga. Podemos ver que eles possuem uma bilheteria bem, apesar de alguns até possuírem uma boa crítica.
+
+```{r}
+result %>%
+    filter(cluster == 1) %>%
+    select(filme, nota_audiencia, bilheteria, papel)
+```
+
+### Godzilla
+
+Já aqui, apesar de ser um filme que não faz parte de uma saga, temos uma boa bilheteria, isso pode se dar ao fato de ser um filme de um personagem bem famoso, o Godzilla.
+
+```{r}
+result %>%
+    filter(cluster == 2) %>%
+    select(filme, nota_audiencia, bilheteria, papel)
+```
+### Marvel, fim de uma era
+
+Aqui temos os filmes com maior bilheteria da atriz, ambos da Marvel, também possuem uma ótima crítica. Esse alto valor na bilheteria provavelmente se deve por serem filmes que encerraram uma fase do universo Mavel que durou 10 anos, fazem parte de um universo de filmes que conseguiu conquistar muitos fãs.
+
+```{r}
+result %>%
+    filter(cluster == 3) %>%
+    select(filme, nota_audiencia, bilheteria, papel)
+```
+
+### Marvel, introdução ao universo
+
+Aqui temos 2 filmes com ótimas bilheterias também, onde ela começou a ser introduzida ao universo Marvel
+
+```{r}
+result %>%
+    filter(cluster == 4) %>%
+    select(filme, nota_audiencia, bilheteria, papel)
+```
